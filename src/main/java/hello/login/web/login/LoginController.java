@@ -10,6 +10,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -69,7 +70,7 @@ public class LoginController {
         return "redirect:/";
     }
 
-    @PostMapping("/login")
+//    @PostMapping("/login")
     public String loginV3(@Valid @ModelAttribute LoginForm loginForm,
                           BindingResult bindingResult,
                           HttpServletResponse response,
@@ -90,6 +91,31 @@ public class LoginController {
         session.setAttribute(SessionConst.LOGIN_MEMBER, member);
 
         return "redirect:/";
+    }
+
+
+    @PostMapping("/login")
+    public String loginV4(@Valid @ModelAttribute LoginForm loginForm,
+                          BindingResult bindingResult,
+                          @RequestParam(defaultValue = "/") String redirectURL,
+                          HttpServletResponse response,
+                          HttpServletRequest request) {
+        if (bindingResult.hasErrors()) {
+            return "login/loginForm";
+        }
+
+        Member member = loginService.login(loginForm.getLoginId(), loginForm.getPassword());
+
+        if (member == null) {
+            // global 오류 (@ScriptAssert를 사용하는 것보다 낫다.)
+            bindingResult.reject("loginFail", "아이디 또는 패스워드가 일치하지 않습니다.");
+            return "login/loginForm";
+        }
+
+        HttpSession session = request.getSession();
+        session.setAttribute(SessionConst.LOGIN_MEMBER, member);
+
+        return "redirect:" + redirectURL;
     }
 
     //    @PostMapping("/logout")
